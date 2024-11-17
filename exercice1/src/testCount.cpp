@@ -17,10 +17,6 @@ main() {
     cout << '\t' << "Count<char, 'a', 'a'>::value = "<< Count<char,'a','a'>::value << endl;
     cout << '\t' <<"Count<int, 5, 5, 5, 6>:: value = "<< Count<int,5,5,5,6>::value << endl;
     cout << "== [ Count test = end ] ==" << endl;
-    
 
-
-    // Tout s'est bien passé.
     return EXIT_SUCCESS;
-
 }

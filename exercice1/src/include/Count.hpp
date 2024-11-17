@@ -14,5 +14,5 @@ template <typename T, T val>
 class Count<T, val> {
 public:
     // Liste vide, retourne 0
-   enum: int { value = 0 };
+    enum : int { value = 0 };
 };
