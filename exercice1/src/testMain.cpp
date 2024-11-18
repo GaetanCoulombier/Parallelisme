@@ -1,16 +1,11 @@
 #include "include/Count.hpp"
 #include "include/Found_N_Length_Subset.hpp"
+#include "include/Longuest_Subset.hpp"
 #include <iostream>
 #include <cstdlib>
 #include <cstddef>
 
-/**
- * Programme principal.
- *
- * @return @c EXIT_FAILURE car exécution toujours réussie.
- */
-int
-main() { 
+int main() { 
     using namespace std;
 
     // Question 1
@@ -28,5 +23,11 @@ main() {
     cout << '\t' << "Found_N_Length_Subset<char, 2, 'a', 'b', 'a', 'a'>::Yes = " << Found_N_Length_Subset<char, 2, 'a', 'b', 'a', 'a'>::Yes << endl;
     cout << "== [ Found N Length Subset test = end ] ==" << endl;
 
+    // Question 3
+    cout << "== [ Longuest_Subset test = begin ] ==" << endl;
+    cout << '\t' << "Longuest_Subset<int>::value = " << Longuest_Subset<int>::value << endl;
+    cout << '\t' << "Longuest_Subset<char, 'a'>::value = " << Longuest_Subset<char, 'a'>::value << endl;
+    cout << '\t' << "Longuest_Subset<int, 0, 1, 0, 0, 1, 1, 1, 0>::value = " << Longuest_Subset<int, 0, 1, 0, 0, 1, 1, 1, 0>::value << endl;
+    cout << "== [ Longuest_Subset test = end ] ==" << endl;
     return EXIT_SUCCESS;
 }
