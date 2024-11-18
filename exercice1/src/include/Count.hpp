@@ -1,3 +1,6 @@
+#ifndef COUNT_HPP
+#define COUNT_HPP
+
 template <typename T, T val, T... list>
 class Count;
 
@@ -16,3 +19,5 @@ public:
     // Liste vide, retourne 0
     enum : int { value = 0 };
 };
+
+#endif // COUNT_HPP

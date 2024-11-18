@@ -8,3 +8,11 @@ Contrôle continue dans le cadre du cour : SMINFO3A - Programmation parallèle e
 ```bash
 cmake -G"Unix Makefiles"
 ```
+- Puis executer (Pour compiler) :
+```bash
+make
+```
+- Enfin executer (Pour lancer le programme) :
+```bash
+./bin/NOM_DU_PROGRAMME
+```
