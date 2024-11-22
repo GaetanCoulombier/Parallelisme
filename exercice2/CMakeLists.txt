@@ -18,7 +18,6 @@ set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 # Source files for the executable
 set(SOURCES
     src/testMain.cpp
-    src/Metrics.cpp # Include other source files if needed
 )
 
 # Add the executable
@@ -27,10 +26,10 @@ add_executable(testMain ${SOURCES})
 # Enable verbose makefile output (optional)
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 
-# Find and link OpenMP
-find_package(OpenMP REQUIRED)
-if(OpenMP_CXX_FOUND)
-    target_link_libraries(testMain PRIVATE OpenMP::OpenMP_CXX)
+# Find and link TBB
+find_package(TBB REQUIRED)
+if(TBB_FOUND)
+    target_link_libraries(testMain PRIVATE TBB::tbb)
 endif()
 
 # Optional: Show status messages
@@ -39,3 +38,4 @@ message(STATUS "C++ compiler: ${CMAKE_CXX_COMPILER}")
 message(STATUS "C++ compiler version: ${CMAKE_CXX_COMPILER_VERSION}")
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Output path: ${EXECUTABLE_OUTPUT_PATH}")
+message(STATUS "TBB found: ${TBB_FOUND}")
