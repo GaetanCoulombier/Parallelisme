@@ -24,7 +24,7 @@ namespace merging {
                                             const Compare& comp,
                                             const size_t& cutoff) {
 
-      strategyTBB(first1, last1, first2, last2, result, comp, cutoff);
+      strategyA(first1, last1, first2, last2, result, comp, cutoff);
 
       // Respect de la sémantique de l'algorithme merge.
       return result + (last1 - first1) + (last2 - first2);
@@ -51,7 +51,7 @@ namespace merging {
              typename InputRandomAccessIterator2,
              typename OutputRandomAccessIterator,
              typename Compare>
-    static void strategyTBB(const InputRandomAccessIterator1& first1,
+    static void strategyA(const InputRandomAccessIterator1& first1,
                           const InputRandomAccessIterator1& last1,
                           const InputRandomAccessIterator2& first2,
                           const InputRandomAccessIterator2& last2,
@@ -69,7 +69,7 @@ namespace merging {
       }
 
       if (size1 < size2) {
-        strategyTBB(first2, last2, first1, last1, result, comp, cutoff);
+        strategyA(first2, last2, first1, last1, result, comp, cutoff);
         return;
       }
 
@@ -81,10 +81,10 @@ namespace merging {
 
       tbb::parallel_invoke(
         [&]() {
-          strategyTBB(first1, middle1, first2, middle2, result, comp, cutoff);
+          strategyA(first1, middle1, first2, middle2, result, comp, cutoff);
         },
         [&]() {
-          strategyTBB(middle1 + 1, last1, middle2, last2, middle3 + 1, comp, cutoff);
+          strategyA(middle1 + 1, last1, middle2, last2, middle3 + 1, comp, cutoff);
         }
       );
     }
