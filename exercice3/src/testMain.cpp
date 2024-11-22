@@ -18,7 +18,7 @@ int main() {
     auto start = chrono::high_resolution_clock::now();
 
     // Appel de la fusion parallèle
-    //merging::ParallelRecursiveMerge::apply(vec1.begin(), vec1.end(), vec2.begin(), vec2.end(), result.begin(), cutoff);
+    merging::ParallelRecursiveMerge::apply(vec1.begin(), vec1.end(), vec2.begin(), vec2.end(), result.begin(), cutoff);
 
     // Fin du chronomètre
     auto end = chrono::high_resolution_clock::now();

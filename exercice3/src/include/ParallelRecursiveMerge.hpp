@@ -60,9 +60,8 @@ protected:
                           const Compare& comp,
                           const size_t& cutoff) {
 
-        tbb::task_group tg;
-        strategyBTasking(first1, last1, first2, last2, result, comp, cutoff, tg);
-        tg.wait();
+        tbb::task_group task_group_instance;
+        strategyBTasking(first1, last1, first2, last2, result, comp, cutoff, task_group_instance);
     }
 
     template<typename InputRandomAccessIterator1,
@@ -76,37 +75,74 @@ protected:
                                   const OutputRandomAccessIterator& result,
                                   const Compare& comp,
                                   const size_t& cutoff,
-                                  tbb::task_group& tg) {
+                                  tbb::task_group& task_group_instance) {
+    // Taille des deux sous-conteneurs.
+          const auto size1 = last1 - first1;
+          const auto size2 = last2 - first2;
 
-        const auto size1 = last1 - first1;
-        const auto size2 = last2 - first2;
+          // Nous sommes passés sous la tolérance : la récursion s'arrête.
+          if (static_cast< size_t >(size1 + size2) < cutoff) {
+      std::merge(first1, last1, first2, last2, result, comp);
+      return;
+          }
 
-        // Seuil pour la terminaison de la récursion
-        if (static_cast<size_t>(size1 + size2) < cutoff) {
-            std::merge(first1, last1, first2, last2, result, comp);
-            return;
-        }
+          // Le sous-conteneur correspondant à l'opérande gauche est par convention 
+          // plus long que celui correspondant à l'opérande droit. Si ce n'est pas
+          // le cas, nous remettons les choses en ordre.
+          if (size1 < size2) {
+      strategyBTasking(first2, 
+          last2, 
+          first1, 
+          last1, 
+          result,	  
+          comp,
+          cutoff,
+          task_group_instance);
+      return;
+          }
 
-        // S'assurer que le premier conteneur est plus grand
-        if (size1 < size2) {
-            strategyBTasking(first2, last2, first1, last1, result, comp, cutoff, tg);
-            return;
-        }
+          // Itérateur repérant l'élément médian dans le sous-conteneur gauche.
+          const InputRandomAccessIterator1 middle1 = 
+      first1 + size1 / 2 + size1 % 2;
 
-        const auto middle1 = first1 + size1 / 2 + size1 % 2;
-        const auto middle2 = std::lower_bound(first2, last2, *middle1, comp);
-        const auto middle3 = result + (middle1 - first1) + (middle2 - first2);
+          // Itérateur repérant l'élément pivot dans le sous-conteneur droit.
+          const InputRandomAccessIterator2 middle2 = 
+      std::lower_bound(first2, last2, *middle1, comp);
 
-        *middle3 = *middle1;
+          // Itérateur répérant la position du sous-conteneur résultat à laquelle 
+          // sera implanté l'élément médian du sous-conteneur gauche.
+          const OutputRandomAccessIterator middle3 = 
+      result + (middle1 - first1) + (middle2 - first2);
 
-        // Créer deux tâches pour chaque moitié
-        tg.run([&] {
-            strategyBTasking(first1, middle1, first2, middle2, result, comp, cutoff, tg);
-        });
+      // Recopie de l'élément médian du sous-conteneur gauche dans le 
+      // sous-conteneur résultat.
+      *middle3 = *middle1;
 
-        tg.run([&] {
-            strategyBTasking(middle1 + 1, last1, middle2, last2, middle3 + 1, comp, cutoff, tg);
-        });
+
+      // Créer deux tâches pour chaque moitié
+      task_group_instance.run([&] {
+          strategyBTasking(first1, 
+                        middle1,
+                        first2, 
+                        middle2,
+                        result,
+                        comp,
+                        cutoff,
+                        task_group_instance);
+      });
+
+      task_group_instance.run([&] {
+          strategyBTasking(middle1 + 1, 
+                        last1,
+                        middle2, 
+                        last2,
+                        middle3 + 1,
+                        comp,
+                        cutoff,
+                        task_group_instance);
+      });
+
+      task_group_instance.wait();
     }
 };
 
