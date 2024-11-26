@@ -83,7 +83,7 @@ main(int argc, char* argv[]) {
   std::cout << "--[ merge: end ]--" << std::endl;
   std::cout << std::endl;
 
-// Détermination du nombre de threads disponibles en utilisant OpenMP.
+  // Détermination du nombre de threads disponibles en utilisant OpenMP.
 #ifdef _OPENMP
   const int threads = omp_get_max_threads();
 #else
@@ -100,43 +100,40 @@ main(int argc, char* argv[]) {
   const auto invComp = std::greater_equal< const Type& >();
 
   // Durées d'exécution de l'algorithme ParallelStableMerge. Nous allons 
-  // utiliser plusieurs valeurs du nombre de threads disponibles.
-  for (int nb = 1; nb <= threads; nb ++) {
-    start = std::chrono::steady_clock::now();
-    for (size_t i = 0; i != iters; i ++) {
-      merging::ParallelStableMerge::apply(lhs.rbegin(), 
-					  lhs.rend(),
-					  rhs.rbegin(), 
-					  rhs.rend(),
-					  result.rbegin(),
-					  invComp,
-					  nb);
-    }
-    stop = std::chrono::steady_clock::now();
+  // utiliser directement le nombre maximal de threads disponibles.
+  start = std::chrono::steady_clock::now();
+  for (size_t i = 0; i != iters; i ++) {
+    merging::ParallelStableMerge::apply(lhs.rbegin(), 
+                                        lhs.rend(),
+                                        rhs.rbegin(), 
+                                        rhs.rend(),
+                                        result.rbegin(),
+                                        invComp,
+                                        threads); // Utilisation directe du nombre maximal de threads
+  }
+  stop = std::chrono::steady_clock::now();
   const int par = 
     std::chrono::duration_cast< std::chrono::milliseconds >(stop - start).count();    
 
   // Affichage des résultats de la version parallèle avec, en plus, le calcul
   // des facteurs d'accélération et d'efficacité. Une accélération sur-linéaire
   // indique une meilleure utilisation des caches L2 (partagé) et L1 (privé).  
-    std::cout << "--[ ParallelStableMerge: begin ]--" << std::endl;
-    std::cout << "\tThread(s):\t" << nb << std::endl;
-    std::cout << "\tDurée:\t\t" << par << " msec." << std::endl;
-    std::cout << "\tVerdict:\t\t"
-  	      << std::boolalpha 
-  	      << std::is_sorted(result.begin(), result.end(), comp)
-  	      << std::endl;
-    std::cout << "\tSpeedup:\t" 
-  	      << Metrics::speedup(seq, par)
-  	      << std::endl;
-    std::cout << "\tEfficiency:\t"
-  	      << Metrics::efficiency(seq, par, nb)
-  	      << std::endl;
-    std::cout << "--[ parallelStableMerge: end ]--" << std::endl;
-    std::cout << std::endl;
-  } 
+  std::cout << "--[ ParallelStableMerge: begin ]--" << std::endl;
+  std::cout << "\tThread(s):\t" << threads << std::endl;
+  std::cout << "\tDurée:\t\t" << par << " msec." << std::endl;
+  std::cout << "\tVerdict:\t\t"
+            << std::boolalpha 
+            << std::is_sorted(result.begin(), result.end(), comp)
+            << std::endl;
+  std::cout << "\tSpeedup:\t" 
+            << Metrics::speedup(seq, par)
+            << std::endl;
+  std::cout << "\tEfficiency:\t"
+            << Metrics::efficiency(seq, par, threads)
+            << std::endl;
+  std::cout << "--[ parallelStableMerge: end ]--" << std::endl;
+  std::cout << std::endl;
 
   // Tout s'est bien passé.
   return EXIT_SUCCESS;
-
 }
