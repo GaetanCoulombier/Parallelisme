@@ -1,9 +1,10 @@
 #include "ParallelRecursiveMerge.hpp"
 #include "Metrics.hpp"
 #include <vector>
+#include <numeric>
 #include <iostream>
 #include <sstream>
-#include <numeric>
+#include <chrono>
 #include <cstdlib>
 
 /**
@@ -79,8 +80,14 @@ int main(int argc, char* argv[]) {
     std::cout << std::endl;
 
     // Obtention du nombre de threads disponibles via TBB.
-    int threads = tbb::task_scheduler_init::default_num_threads();
+    int threads = 6;
 
+#ifdef __TBB_info_H  
+    const int threads = tbb::info::default_concurrency();
+#else  
+    const int threads = tbb::task_scheduler_init::default_num_threads();
+    tbb::task_scheduler_init init(threads);
+#endif  
     // Durées d'exécution de l'algorithme ParallelRecursiveMerge. Nous 
     // allons utiliser plusieurs valeurs du cutoff.
     for (size_t cutoff = 1024;
@@ -125,41 +132,3 @@ int main(int argc, char* argv[]) {
     // Tout s'est bien passé.
     return EXIT_SUCCESS;
 }
-
-/*
-int main() {
-    using namespace std;
-
-    // Déclaration des vecteurs
-    vector<int> vec1 = {1, 3, 5, 7, 9};
-    vector<int> vec2 = {2, 4, 6, 8, 10};
-    vector<int> result(vec1.size() + vec2.size());
-    size_t cutoff = 10;
-
-    cout << "== [ Parallel Recursive Merge TBB parallel invoke test = begin ] ==" << endl;
-
-    // Démarrage du chronomètre
-    auto start = chrono::high_resolution_clock::now();
-
-    // Appel de la fusion parallèle
-    merging::ParallelRecursiveMerge::apply(vec1.begin(), vec1.end(), vec2.begin(), vec2.end(), result.begin(), cutoff);
-
-    // Fin du chronomètre
-    auto end = chrono::high_resolution_clock::now();
-    chrono::duration<double, std::milli> duration = end - start;
-
-    // Affichage du temps d'exécution
-    cout << '\t' << "Temps d'exécution : " << duration.count() << " ms" << endl;
-
-    // Affichage du résultat
-    cout << '\t' << "Résultat de la fusion : ";
-    for (const auto& val : result) {
-        cout << val << " ";
-    }
-    cout << endl;
-
-    cout << "== [ Parallel Recursive Merge TBB parallel invoke test = end ] ==" << endl;
-
-    return EXIT_SUCCESS;
-}
-*/
