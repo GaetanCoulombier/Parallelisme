@@ -3,7 +3,7 @@
 
 #include <functional>
 #include <algorithm>
-#include <tbb/task_group.h>
+#include <tbb/tbb.h>
 #include <iterator>
 
 namespace merging
@@ -42,7 +42,6 @@ namespace merging
               const InputRandomAccessIterator2 &first2,
               const InputRandomAccessIterator2 &last2,
               const OutputRandomAccessIterator &result,
-              const Compare &comp,
               const size_t &cutoff)
         {
 
