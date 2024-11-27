@@ -1,41 +1,23 @@
-# Minimum version of CMake required
-cmake_minimum_required(VERSION 3.10)
+# Version de cmake demandée.
+CMAKE_MINIMUM_REQUIRED( VERSION 2.8 )
+ 
+# Chemin des répertoires contenant les fichiers entêtes.
+INCLUDE_DIRECTORIES( src/include )
 
-# Project name and languages
-project(MyProject LANGUAGES CXX)
+# Chemin du répertoire contenant les binaires.
+SET ( EXECUTABLE_OUTPUT_PATH bin/${CMAKE_BUILD_TYPE} )
 
-# Specify the C++ standard
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+# Packages requis.
+FIND_PACKAGE( TBB ) 
 
-# Path to include directories
-include_directories(src/include)
-
-# Path for output binaries
-set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
-
-# Source files for the executable
-set(SOURCES
-    src/testMain.cpp
+# Création des exécutables.
+ADD_EXECUTABLE( testMain 
+                src/Metrics.cpp
+		src/testMain.cpp
 )
 
-# Add the executable
-add_executable(testMain ${SOURCES})
+# Librairies avec lesquelles linker.
+TARGET_LINK_LIBRARIES( testMain TBB::tbb )
 
-# Enable verbose makefile output (optional)
-set(CMAKE_VERBOSE_MAKEFILE OFF)
-
-# Find and link TBB
-find_package(TBB REQUIRED)
-if(TBB_FOUND)
-    target_link_libraries(testMain PRIVATE TBB::tbb)
-endif()
-
-# Optional: Show status messages
-message(STATUS "CMake version: ${CMAKE_VERSION}")
-message(STATUS "C++ compiler: ${CMAKE_CXX_COMPILER}")
-message(STATUS "C++ compiler version: ${CMAKE_CXX_COMPILER_VERSION}")
-message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
-message(STATUS "Output path: ${EXECUTABLE_OUTPUT_PATH}")
-message(STATUS "TBB found: ${TBB_FOUND}")
+# Faire parler le make.
+set( CMAKE_VERBOSE_MAKEFILE off )
