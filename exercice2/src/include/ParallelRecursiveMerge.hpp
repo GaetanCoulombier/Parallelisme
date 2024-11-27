@@ -4,7 +4,7 @@
 #include <functional>
 #include <algorithm>
 #include <iterator>
-#include <tbb/parallel_invoke.h>
+#include <tbb/tbb.h>
 #include <chrono>
 
 namespace merging {

@@ -80,8 +80,6 @@ int main(int argc, char* argv[]) {
     std::cout << std::endl;
 
     // Obtention du nombre de threads disponibles via TBB.
-    int threads = 6;
-
 #ifdef __TBB_info_H  
     const int threads = tbb::info::default_concurrency();
 #else  
