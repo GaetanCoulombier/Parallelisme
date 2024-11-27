@@ -7,48 +7,6 @@
 #include <chrono>
 #include <cstdlib>
 
-#include <iostream>
-#include <vector>
-#include <chrono>
-#include "ParallelRecursiveMerge.hpp"
-
-int main() {
-    using namespace std;
-
-    // Déclaration des vecteurs
-    vector<int> vec1 = {1, 3, 5, 7, 9};
-    vector<int> vec2 = {2, 4, 6, 8, 10};
-    vector<int> result(vec1.size() + vec2.size());
-    size_t cutoff = 10;
-
-    cout << "== [ Parallel Recursive Merge TBB tasking test = begin ] ==" << endl;
-
-    // Démarrage du chronomètre
-    auto start = chrono::high_resolution_clock::now();
-
-    // Appel de la fusion parallèle
-    //merging::ParallelRecursiveMerge::apply(vec1.begin(), vec1.end(), vec2.begin(), vec2.end(), result.begin(), cutoff);
-    merging::ParallelRecursiveMerge::apply(vec1.begin(), vec1.end(), vec2.begin(), vec2.end(), result.begin(), cutoff);
-
-    // Fin du chronomètre
-    auto end = chrono::high_resolution_clock::now();
-    chrono::duration<double, std::milli> duration = end - start;
-
-    // Affichage du temps d'exécution
-    cout << '\t' << "Temps d'exécution : " << duration.count() << " ms" << endl;
-
-    // Affichage du résultat
-    cout << '\t' << "Résultat de la fusion : ";
-    for (const auto& val : result) {
-        cout << val << " ";
-    }
-    cout << endl;
-
-    cout << "== [ Parallel Recursive Merge TBB tasking test = end ] ==" << endl;
-
-    return EXIT_SUCCESS;
-}
-
 /**
  * Programme principal.
  *
@@ -57,7 +15,6 @@ int main() {
  * @return @c EXIT_SUCCESS en cas d'exécution réussie ou @c EXIT_FAILURE en cas
  *   de problèmes.
  */
-/*
 int main(int argc, char* argv[]) {
     // La ligne de commandes est vide : l'utilisateur demande de l'aide.
     if (argc == 1) {
@@ -131,9 +88,10 @@ int main(int argc, char* argv[]) {
 #endif  
     // Durées d'exécution de l'algorithme ParallelRecursiveMerge. Nous 
     // allons utiliser plusieurs valeurs du cutoff.
-    for (size_t cutoff = 1024;
+    std::cout << "Result size: " << result.size() << std::endl;
+    for (size_t cutoff = 180000;
          cutoff < result.size();
-         cutoff += 1024) {
+         cutoff += 5000) {
         // Durée d'exécution de notre version parallèle.
         auto start = std::chrono::high_resolution_clock::now();
         for (size_t i = 0; i != iters; i++) {
@@ -173,4 +131,3 @@ int main(int argc, char* argv[]) {
     // Tout s'est bien passé.
     return EXIT_SUCCESS;
 }
-*/
