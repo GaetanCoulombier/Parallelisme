@@ -84,11 +84,7 @@ main(int argc, char* argv[]) {
   std::cout << std::endl;
 
   // Détermination du nombre de threads disponibles en utilisant OpenMP.
-#ifdef _OPENMP
   const int threads = omp_get_max_threads();
-#else
-  const int threads = std::thread::hardware_concurrency();
-#endif
 
   // L'algorithme ParallelStableMerge ne peut fonctionner qu'avec une relation
   // d'ordre telle que <= ou >= mais pas < ou >, ce qui est justement notre
