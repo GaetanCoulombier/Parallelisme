@@ -20,4 +20,4 @@ public:
     enum : int { value = 0 };
 };
 
-#endif // COUNT_HPP
+#endif

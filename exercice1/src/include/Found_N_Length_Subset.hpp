@@ -32,4 +32,4 @@ public:
     enum : bool { Yes = (n == 0) };
 };
 
-#endif // FOUND_N_LENGTH_SUBSET_HPP
+#endif

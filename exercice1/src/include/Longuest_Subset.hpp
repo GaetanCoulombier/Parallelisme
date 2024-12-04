@@ -11,23 +11,22 @@ class Longuest_Subset;
 template <typename T, T val, T... rest>
 class Longuest_Subset<T, val, rest...> {
 private:
-    // Longueur de la sous-liste consécutive de `val` à partir du premier élément
-    static constexpr int currentCount = Count<T, val, rest...>::value + 1;
+    // Calcule la longueur de la sous-liste courante
+    static const int currentCount = Count<T, val, rest...>::value + 1;
 
-    // Calculer la longueur maximale pour l'élément courant et les éléments suivants
-    static constexpr int maxCount = Longuest_Subset<T, rest...>::value;
+    // Calcule la longueur de la sous-liste la plus longue
+    static const int maxCount = Longuest_Subset<T, rest...>::value;
 
 public:
-    // La longueur de la plus longue sous-liste consécutive
-    enum : int { value = (currentCount > maxCount) ? currentCount : maxCount};
+    // La longueur de la sous-liste la plus longue est le maximum entre la longueur de la sous-liste courante et la longueur de la sous-liste la plus longue
+    static const int value = (currentCount > maxCount) ? currentCount : maxCount;
 };
 
 // Cas particulier : liste vide
 template <typename T>
 class Longuest_Subset<T> {
 public:
-    // Si la liste est vide, la longueur maximale est 0
-    enum : int { value = 0 };
+    static const int value = 0;
 };
 
-#endif // LONGUEST_SUBSET_HPP
+#endif
