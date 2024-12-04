@@ -5,7 +5,6 @@
 #include <fstream>
 #include <iostream>
 #include <tbb/parallel_reduce.h>
-#include <tbb/blocked_range.h>
 
 #define DEFAULT_NAME "pearson"
 
@@ -107,83 +106,25 @@ Data_Set load_file(std::istream &stream) noexcept {
 /* -------------------------------------------------------------------------- */
 
 Correlation calculate(const Data_Set &data_set) noexcept {
-  const size_t n = data_set.n;
-  const double *x = data_set.x;
-  const double *y = data_set.y;
 
-  // Step 1: Calculate means
-  struct MeanReducer {
-    const double *x;
-    const double *y;
-    double sum_x = 0.0;
-    double sum_y = 0.0;
-
-    MeanReducer(const double *x, const double *y) : x(x), y(y) {}
-
-    MeanReducer(const MeanReducer &other, tbb::split)
-        : x(other.x), y(other.y), sum_x(0.0), sum_y(0.0) {}
-
-    void operator()(const tbb::blocked_range<size_t> &range) {
-      for (size_t i = range.begin(); i < range.end(); ++i) {
-        sum_x += x[i];
-        sum_y += y[i];
-      }
-    }
-
-    void join(const MeanReducer &other) {
-      sum_x += other.sum_x;
-      sum_y += other.sum_y;
-    }
-  };
-
-  MeanReducer mean_reducer(x, y);
-  tbb::parallel_reduce(tbb::blocked_range<size_t>(0, n), mean_reducer);
-
-  const double moy_x = mean_reducer.sum_x / n;
-  const double moy_y = mean_reducer.sum_y / n;
-
-  // Step 2: Calculate Pearson components
-  struct PearsonReducer {
-    const double *x;
-    const double *y;
-    double moy_x;
-    double moy_y;
-    double sum_xy = 0.0;
-    double sum_xx = 0.0;
-    double sum_yy = 0.0;
-
-    PearsonReducer(const double *x, const double *y, double moy_x, double moy_y)
-        : x(x), y(y), moy_x(moy_x), moy_y(moy_y) {}
-
-    PearsonReducer(const PearsonReducer &other, tbb::split)
-        : x(other.x), y(other.y), moy_x(other.moy_x), moy_y(other.moy_y),
-          sum_xy(0.0), sum_xx(0.0), sum_yy(0.0) {}
-
-    void operator()(const tbb::blocked_range<size_t> &range) {
-      for (size_t i = range.begin(); i < range.end(); ++i) {
-        const double dx = x[i] - moy_x;
-        const double dy = y[i] - moy_y;
-        sum_xy += dx * dy;
-        sum_xx += dx * dx;
-        sum_yy += dy * dy;
-      }
-    }
-
-    void join(const PearsonReducer &other) {
-      sum_xy += other.sum_xy;
-      sum_xx += other.sum_xx;
-      sum_yy += other.sum_yy;
-    }
-  };
-
-  PearsonReducer pearson_reducer(x, y, moy_x, moy_y);
-  tbb::parallel_reduce(tbb::blocked_range<size_t>(0, n), pearson_reducer);
+  double tot_x = 0.0, tot_y = 0.0;
+  for (size_t i = 0; i != data_set.n; i ++) {
+    tot_x += data_set.x[i];
+    tot_y += data_set.y[i];
+  }
+  const double moy_x = tot_x / data_set.n, moy_y = tot_y / data_set.n;
+  
+  double tot_xx = 0.0, tot_xy = 0.0, tot_yy = 0.0;
+  for (size_t i = 0; i != data_set.n; i ++) {
+    tot_xy += (data_set.x[i] - moy_x) * (data_set.y[i] - moy_y);
+    tot_xx += (data_set.x[i] - moy_x) * (data_set.x[i] - moy_x);
+    tot_yy += (data_set.y[i] - moy_y) * (data_set.y[i] - moy_x);
+  }
 
   Correlation res;
-  res.a = pearson_reducer.sum_xy / pearson_reducer.sum_xx;
+  res.a = tot_xy / tot_xx;
   res.b = moy_y - res.a * moy_x;
-  res.r = pearson_reducer.sum_xy /
-          std::sqrt(pearson_reducer.sum_xx * pearson_reducer.sum_yy);
+  res.r = tot_xy / std::sqrt(tot_xx * tot_yy);
 
   return res;
 }
