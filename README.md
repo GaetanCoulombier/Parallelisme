@@ -1,7 +1,7 @@
 # Nathan FRANCLET - 22005929
 # Gaëtan COULOMBIER - 22003446
 
-Contrôle continue dans le cadre du cour : SMINFO3A - Programmation parallèle et distribuée
+Contrôle continu dans le cadre du module : SMINFO3A - Programmation parallèle et distribuée
 
 # Lancer le programme
 
