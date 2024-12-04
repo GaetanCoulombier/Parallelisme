@@ -80,12 +80,8 @@ int main(int argc, char* argv[]) {
     std::cout << std::endl;
 
     // Obtention du nombre de threads disponibles via TBB.
-#ifdef __TBB_info_H  
     const int threads = tbb::info::default_concurrency();
-#else  
-    const int threads = tbb::task_scheduler_init::default_num_threads();
-    tbb::task_scheduler_init init(threads);
-#endif  
+    
     // Durées d'exécution de l'algorithme ParallelRecursiveMerge. Nous 
     // allons utiliser plusieurs valeurs du cutoff.
     for (size_t cutoff = 1024;

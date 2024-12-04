@@ -4,9 +4,40 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <tbb/task_scheduler_init.h>
+#include <tbb/blocked_range.h>
 #include <tbb/parallel_reduce.h>
+#include <functional>
+#include <numeric>
 
 #define DEFAULT_NAME "pearson"
+
+typedef tbb::blocked_range<size_t> Range;
+
+class Body {
+  public:
+    Body(const Data_Set* const data_set) : data_set_(data_set), tot_x_(0.0), tot_y_(0.0) {}
+    Body(const Body& rhs, tbb::split) : data_set_(rhs.data_set_), tot_x_(0.0), tot_y_(0.0) {}
+  public:
+    const double& getTotX() const { return tot_x_; }
+    const double& getTotY() const { return tot_y_; }
+  public:
+    void operator()(const Range& range) {
+      for (size_t i = range.begin(); i != range.end(); i ++) {
+        tot_x_ += data_set_.x[i];
+        tot_y_ += data_set_.y[i];
+      }
+    }
+  public:
+    void join(const Body& rhs) {
+      tot_x_ += rhs.tot_x_;
+      tot_y_ += rhs.tot_y_;
+    }
+  private:
+    const Data_Set* const data_set_;
+    double tot_x_;
+    double tot_y_;
+};
 
 /**
  * @brief Data measurement set.
@@ -72,6 +103,9 @@ int main(int argc, char *argv[]) {
   // Loads the data set.
   const Data_Set data_set = load_file(stream);
 
+  // 1 thread par coeur
+  tbb::task_scheduler_init init;
+
   // Calculates the corresponding Pearson correlation.
   const Correlation result = calculate(data_set);
 
@@ -108,10 +142,23 @@ Data_Set load_file(std::istream &stream) noexcept {
 Correlation calculate(const Data_Set &data_set) noexcept {
 
   double tot_x = 0.0, tot_y = 0.0;
+  /*
   for (size_t i = 0; i != data_set.n; i ++) {
     tot_x += data_set.x[i];
     tot_y += data_set.y[i];
   }
+  */
+
+  //par classe
+  {
+    Body body(&data_set);
+    const Range range(0, data_set.n);
+
+    tbb::parallel_reduce(range, body);
+    tot_x = body.getTotX();
+    tot_y = body.getTotY();
+  }
+
   const double moy_x = tot_x / data_set.n, moy_y = tot_y / data_set.n;
   
   double tot_xx = 0.0, tot_xy = 0.0, tot_yy = 0.0;
