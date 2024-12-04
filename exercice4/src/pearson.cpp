@@ -4,40 +4,12 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
-#include <tbb/task_scheduler_init.h>
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_reduce.h>
 #include <functional>
 #include <numeric>
 
 #define DEFAULT_NAME "pearson"
-
-typedef tbb::blocked_range<size_t> Range;
-
-class Body {
-  public:
-    Body(const Data_Set* const data_set) : data_set_(data_set), tot_x_(0.0), tot_y_(0.0) {}
-    Body(const Body& rhs, tbb::split) : data_set_(rhs.data_set_), tot_x_(0.0), tot_y_(0.0) {}
-  public:
-    const double& getTotX() const { return tot_x_; }
-    const double& getTotY() const { return tot_y_; }
-  public:
-    void operator()(const Range& range) {
-      for (size_t i = range.begin(); i != range.end(); i ++) {
-        tot_x_ += data_set_.x[i];
-        tot_y_ += data_set_.y[i];
-      }
-    }
-  public:
-    void join(const Body& rhs) {
-      tot_x_ += rhs.tot_x_;
-      tot_y_ += rhs.tot_y_;
-    }
-  private:
-    const Data_Set* const data_set_;
-    double tot_x_;
-    double tot_y_;
-};
 
 /**
  * @brief Data measurement set.
@@ -103,9 +75,6 @@ int main(int argc, char *argv[]) {
   // Loads the data set.
   const Data_Set data_set = load_file(stream);
 
-  // 1 thread par coeur
-  tbb::task_scheduler_init init;
-
   // Calculates the corresponding Pearson correlation.
   const Correlation result = calculate(data_set);
 
@@ -135,6 +104,73 @@ Data_Set load_file(std::istream &stream) noexcept {
   return res;
 }
 
+typedef tbb::blocked_range<size_t> Range;
+
+
+/* -------------------------------------------------------------------------- */
+/*                                  TotauxP1                                  */
+/* -------------------------------------------------------------------------- */
+class TotauxP1 {
+  public:
+    TotauxP1(const Data_Set* const data_set) : data_set_(data_set), tot_x_(0.0), tot_y_(0.0) {}
+    TotauxP1(const TotauxP1& rhs, tbb::split) : data_set_(rhs.data_set_), tot_x_(0.0), tot_y_(0.0) {}
+  public:
+    const double& getTotX() const { return tot_x_; }
+    const double& getTotY() const { return tot_y_; }
+  public:
+    void operator()(const Range& range) {
+      for (size_t i = range.begin(); i != range.end(); i ++) {
+        tot_x_ += data_set_->x[i];
+        tot_y_ += data_set_->y[i];
+      }
+    }
+  public:
+    void join(const TotauxP1& rhs) {
+      tot_x_ += rhs.tot_x_;
+      tot_y_ += rhs.tot_y_;
+    }
+  private:
+    const Data_Set* const data_set_;
+    double tot_x_;
+    double tot_y_;
+};
+
+
+/* -------------------------------------------------------------------------- */
+/*                                  TotauxP2                                  */
+/* -------------------------------------------------------------------------- */
+class TotauxP2 {
+  public:
+    TotauxP2(const Data_Set* const data_set, const double moy_x, const double moy_y) : data_set_(data_set), moy_x_(moy_x), moy_y_(moy_y), tot_xy_(0.0), tot_xx_(0.0), tot_yy_(0.0) {}
+    TotauxP2(const TotauxP2& rhs, tbb::split) : data_set_(rhs.data_set_), moy_x_(rhs.moy_x_), moy_y_(rhs.moy_y_), tot_xy_(0.0), tot_xx_(0.0), tot_yy_(0.0) {}
+  public:
+    const double& getTotXY() const { return tot_xy_; }
+    const double& getTotXX() const { return tot_xx_; }
+    const double& getTotYY() const { return tot_yy_; }
+  public:
+    void operator()(const Range& range) {
+      for (size_t i = range.begin(); i != range.end(); i ++) {
+        tot_xy_ += (data_set_->x[i] - moy_x_) * (data_set_->y[i] - moy_y_);
+        tot_xx_ += (data_set_->x[i] - moy_x_) * (data_set_->x[i] - moy_x_);
+        tot_yy_ += (data_set_->y[i] - moy_y_) * (data_set_->y[i] - moy_x_);
+      }
+    }
+  public:
+    void join(const TotauxP2& rhs) {
+      tot_xy_ += rhs.tot_xy_;
+      tot_xx_ += rhs.tot_xx_;
+      tot_yy_ += rhs.tot_yy_;
+    }
+  private:
+    const Data_Set* const data_set_;
+    const double moy_x_;
+    const double moy_y_;
+    double tot_xy_;
+    double tot_xx_;
+    double tot_yy_;
+};
+
+
 /* -------------------------------------------------------------------------- */
 /*                                  calculate                                 */
 /* -------------------------------------------------------------------------- */
@@ -142,16 +178,17 @@ Data_Set load_file(std::istream &stream) noexcept {
 Correlation calculate(const Data_Set &data_set) noexcept {
 
   double tot_x = 0.0, tot_y = 0.0;
+  
   /*
   for (size_t i = 0; i != data_set.n; i ++) {
     tot_x += data_set.x[i];
     tot_y += data_set.y[i];
   }
   */
-
+  
   //par classe
   {
-    Body body(&data_set);
+    TotauxP1 body(&data_set);
     const Range range(0, data_set.n);
 
     tbb::parallel_reduce(range, body);
@@ -160,13 +197,27 @@ Correlation calculate(const Data_Set &data_set) noexcept {
   }
 
   const double moy_x = tot_x / data_set.n, moy_y = tot_y / data_set.n;
-  
+
   double tot_xx = 0.0, tot_xy = 0.0, tot_yy = 0.0;
+
+  //par classe
+  {
+    TotauxP2 body(&data_set, moy_x, moy_y);
+    const Range range(0, data_set.n);
+
+    tbb::parallel_reduce(range, body);
+    tot_xy = body.getTotXY();
+    tot_xx = body.getTotXX();
+    tot_yy = body.getTotYY();
+  }
+
+  /*
   for (size_t i = 0; i != data_set.n; i ++) {
     tot_xy += (data_set.x[i] - moy_x) * (data_set.y[i] - moy_y);
     tot_xx += (data_set.x[i] - moy_x) * (data_set.x[i] - moy_x);
     tot_yy += (data_set.y[i] - moy_y) * (data_set.y[i] - moy_x);
   }
+  */
 
   Correlation res;
   res.a = tot_xy / tot_xx;
